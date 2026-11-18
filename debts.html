@@ -1,1 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TakaTrack - Debts & Dues</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { background-color: #13161f; color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.8); }
+    </style>
+</head>
+<body class="bg-[#13161f] text-slate-100 min-h-screen pb-28 select-none">
+
+    <!-- Top Header -->
+    <header class="px-4 py-3 flex justify-between items-center border-b border-slate-800/80 sticky top-0 bg-[#13161f]/95 backdrop-blur-md z-30">
+        <div class="flex items-center space-x-2.5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-emerald-500 to-teal-400 flex items-center justify-center font-bold text-white shadow-lg">৳</div>
+            <h1 class="font-bold text-lg tracking-tight text-white">Expense Tracker</h1>
+        </div>
+        <div class="flex items-center space-x-3.5 text-slate-300">
+            <span class="relative p-1 cursor-pointer">🔔</span>
+            <span class="p-1 text-amber-400 cursor-pointer">☀️</span>
+        </div>
+    </header>
+
+    <!-- Sub Navigation Tabs -->
+    <div class="px-4 py-2.5 flex space-x-2 overflow-x-auto no-scrollbar border-b border-slate-800/80 sticky top-[61px] bg-[#13161f]/95 z-20">
+        <a href="index.html" class="shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white flex items-center space-x-1.5"><span>⊞</span><span>Dashboard</span></a>
+        <a href="summary.html" class="shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white flex items-center space-x-1.5"><span>📅</span><span>Monthly Summary</span></a>
+        <a href="ledger.html" class="shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white flex items-center space-x-1.5"><span>🧾</span><span>Daily Ledger</span></a>
+        <a href="wallets.html" class="shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white flex items-center space-x-1.5"><span>👛</span><span>Wallets</span></a>
+        <a href="debts.html" class="shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500 text-slate-950 flex items-center space-x-1.5"><span>🤝</span><span>ধার ও দেনা</span></a>
+    </div>
+
+    <!-- DEBTS MAIN CONTENT -->
+    <main class="p-4 max-w-md mx-auto space-y-4">
+        <div class="bg-[#1c202d] border border-slate-800 p-5 rounded-3xl space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-base text-white">🤝 ধার ও দেনা ম্যানেজমেন্ট</h3>
+                    <p class="text-[11px] text-slate-400">ওয়ালেট ব্যালেন্সের সাথে সমন্বয় হবে (আয়-ব্যয়ে নয়)</p>
+                </div>
+                <button type="button" onclick="openDebtModal()" class="bg-indigo-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs shadow-lg cursor-pointer">+ নতুন এন্ট্রি</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 pt-1">
+                <div class="bg-[#242938] p-3.5 rounded-2xl border border-slate-700/60">
+                    <p class="text-[11px] text-slate-400">পাবো (Given / Lend)</p>
+                    <p id="totalLendAmount" class="text-lg font-extrabold text-emerald-400 mt-0.5">৳0</p>
+                </div>
+                <div class="bg-[#242938] p-3.5 rounded-2xl border border-slate-700/60">
+                    <p class="text-[11px] text-slate-400">দেব (Taken / Borrow)</p>
+                    <p id="totalBorrowAmount" class="text-lg font-extrabold text-rose-400 mt-0.5">৳0</p>
+                </div>
+            </div>
+
+            <div class="space-y-2 pt-2">
+                <h4 class="font-bold text-xs text-slate-300 uppercase tracking-wider">সকল ধার-দেনার তালিকা</h4>
+                <div id="debtsListContainer" class="space-y-2.5"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Nav Bar -->
+    <nav class="fixed bottom-0 inset-x-0 bg-[#1c202d]/95 backdrop-blur-md border-t border-slate-800 px-3 py-2 flex justify-around items-center z-40">
+        <a href="index.html" class="flex flex-col items-center text-slate-400 text-[10px] space-y-1"><span>⊞</span><span>Home</span></a>
+        <a href="ledger.html" class="flex flex-col items-center text-slate-400 text-[10px] space-y-1"><span>🧾</span><span>Ledger</span></a>
+        <div class="flex items-center space-x-2.5 -mt-3">
+            <a href="index.html" class="w-12 h-11 rounded-2xl bg-emerald-500 text-slate-950 font-extrabold text-lg flex items-center justify-center shadow-lg">↙</a>
+            <a href="index.html" class="w-12 h-11 rounded-2xl bg-rose-500 text-white font-extrabold text-lg flex items-center justify-center shadow-lg">↗</a>
+        </div>
+        <a href="summary.html" class="flex flex-col items-center text-slate-400 text-[10px] space-y-1"><span>📅</span><span>Summary</span></a>
+        <a href="debts.html" class="flex flex-col items-center text-emerald-400 text-[10px] font-bold space-y-1"><span>🤝</span><span>Debts</span></a>
+    </nav>
+
+    <!-- DEBT MODAL -->
+    <div id="debtModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#1c202d] border border-slate-700/80 w-full max-w-sm rounded-3xl p-5 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 class="font-bold text-base text-white">ধার বা দেনা এন্ট্রি</h3>
+                    <p class="text-[10px] text-slate-400">ওয়ালেট ব্যালেন্স থেকে সমন্বয় হবে</p>
+                </div>
+                <button type="button" onclick="closeModal('debtModal')" class="text-slate-400 hover:text-white text-sm cursor-pointer">✕</button>
+            </div>
+            <form onsubmit="submitDebt(event)" class="space-y-3.5">
+                <div class="grid grid-cols-2 gap-1.5 bg-[#242938] p-1 rounded-2xl">
+                    <button type="button" onclick="setDebtType('lend')" id="debtType-lend" class="py-2 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 cursor-pointer">পাবো (Lend)</button>
+                    <button type="button" onclick="setDebtType('borrow')" id="debtType-borrow" class="py-2 rounded-xl text-xs font-bold text-slate-400 cursor-pointer">দেব (Borrow)</button>
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold block mb-1">ব্যক্তির নাম *</label>
+                    <input type="text" id="debtPerson" placeholder="যেমন: রহিম ভাই" required class="w-full bg-[#242938] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-bold block mb-1">পরিমাণ (৳) *</label>
+                        <input type="number" id="debtAmount" step="any" placeholder="0.00" required class="w-full bg-[#242938] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-bold block mb-1">কোন ওয়ালেট:</label>
+                        <select id="debtWalletSelect" class="w-full bg-[#242938] border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none"></select>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold block mb-1">তারিখ:</label>
+                    <input type="date" id="debtDate" required class="w-full bg-[#242938] border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-xs cursor-pointer">সেভ করুন</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- LINK COMMON JS ENGINE -->
+    <script src="js/app.js"></script>
+    <script>
+        let currentDebtType = 'lend';
+
+        function openDebtModal() {
+            document.getElementById('debtAmount').value = '';
+            document.getElementById('debtPerson').value = '';
+            document.getElementById('debtDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('debtWalletSelect').innerHTML = state.wallets.map(w => `<option value="${w.name}">${w.name} (${fmt(w.balance)})</option>`).join('');
+            setDebtType('lend');
+            document.getElementById('debtModal').classList.remove('hidden');
+        }
+
+        function setDebtType(t) {
+            currentDebtType = t;
+            if(t === 'lend') {
+                document.getElementById('debtType-lend').className = "py-2 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 cursor-pointer";
+                document.getElementById('debtType-borrow').className = "py-2 rounded-xl text-xs font-bold text-slate-400 cursor-pointer";
+            } else {
+                document.getElementById('debtType-borrow').className = "py-2 rounded-xl text-xs font-bold bg-rose-500 text-white cursor-pointer";
+                document.getElementById('debtType-lend').className = "py-2 rounded-xl text-xs font-bold text-slate-400 cursor-pointer";
+            }
+        }
+
+        function submitDebt(e) {
+            e.preventDefault();
+            const person = document.getElementById('debtPerson').value.trim();
+            const amount = parseFloat(document.getElementById('debtAmount').value);
+            const walletName = document.getElementById('debtWalletSelect').value;
+            const date = document.getElementById('debtDate').value;
+            if(!person || isNaN(amount) || amount <= 0) return;
+
+            const wObj = state.wallets.find(w => w.name === walletName);
+            if(wObj) {
+                if(currentDebtType === 'lend') wObj.balance -= amount;
+                else wObj.balance += amount;
+            }
+
+            state.debts.unshift({ id: Date.now(), person, amount, type: currentDebtType, wallet: walletName, date, settled: false });
+            closeModal('debtModal');
+            saveAndRenderDebts();
+        }
+
+        function settleDebt(id) {
+            const d = state.debts.find(x => x.id === id);
+            if(!d || d.settled) return;
+            const wObj = state.wallets.find(w => w.name === d.wallet) || state.wallets[0];
+            if(wObj) {
+                if(d.type === 'lend') wObj.balance += d.amount;
+                else wObj.balance -= d.amount;
+            }
+            d.settled = true;
+            saveAndRenderDebts();
+        }
+
+        function deleteDebt(id) {
+            state.debts = state.debts.filter(d => d.id !== id);
+            saveAndRenderDebts();
+        }
+
+        function saveAndRenderDebts() {
+            localStorage.setItem('takatrack_v5', JSON.stringify(state));
+            renderDebtsPage();
+        }
+
+        function renderDebtsPage() {
+            const totalLend = state.debts.filter(d => d.type === 'lend' && !d.settled).reduce((s, d) => s + d.amount, 0);
+            const totalBorrow = state.debts.filter(d => d.type === 'borrow' && !d.settled).reduce((s, d) => s + d.amount, 0);
+            document.getElementById('totalLendAmount').innerText = fmt(totalLend);
+            document.getElementById('totalBorrowAmount').innerText = fmt(totalBorrow);
+
+            document.getElementById('debtsListContainer').innerHTML = state.debts.map(d => `
+                <div class="bg-[#242938] p-3.5 rounded-2xl border ${d.settled ? 'border-slate-800 opacity-60' : 'border-slate-700/60'} flex justify-between items-center text-xs">
+                    <div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${d.type === 'lend' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">${d.type === 'lend' ? 'পাবো (Lend)' : 'দেব (Borrow)'}</span>
+                        <span class="text-[10px] text-slate-400 ml-1">(${d.wallet})</span>
+                        <h4 class="font-bold text-white mt-1 ${d.settled ? 'line-through' : ''}">${d.person}</h4>
+                        <p class="text-[10px] text-slate-400">${d.date}</p>
+                    </div>
+                    <div class="text-right space-y-1">
+                        <p class="font-extrabold ${d.type === 'lend' ? 'text-emerald-400' : 'text-rose-400'}">${fmt(d.amount)}</p>
+                        <div class="flex space-x-2 justify-end">
+                            ${!d.settled ? `<button type="button" onclick="settleDebt(${d.id})" class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer">পরিশোধ</button>` : '<span class="text-[10px] text-slate-500">সমন্বিত</span>'}
+                            <button type="button" onclick="deleteDebt(${d.id})" class="text-slate-500 hover:text-rose-400 text-[10px] cursor-pointer">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        renderDebtsPage();
+    </script>
+</body>
+</html>
 
