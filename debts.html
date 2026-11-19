@@ -124,7 +124,7 @@
             document.getElementById('debtAmount').value = '';
             document.getElementById('debtPerson').value = '';
             document.getElementById('debtDate').value = new Date().toISOString().split('T')[0];
-            document.getElementById('debtWalletSelect').innerHTML = state.wallets.map(w => `<option value="${w.name}">${w.name} (${fmt(w.balance)})</option>`).join('');
+            document.getElementById('debtWalletSelect').innerHTML = state.wallets.map(w => `<option value="${w.name}">${w.name}${w.isSavings ? ' [🏦 সঞ্চয়]' : ''} (${fmt(w.balance)})</option>`).join('');
             setDebtType('lend');
             document.getElementById('debtModal').classList.remove('hidden');
         }
