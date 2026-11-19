@@ -4,9 +4,9 @@ const INITIAL_STATE = {
     carryForwardEnabled: false,
     carryForwardAmount: 500,
     wallets: [
-        { name: 'Credit', balance: 800, icon: '💳', color: 'bg-indigo-500' },
-        { name: 'Cash', balance: 1500, icon: '💵', color: 'bg-emerald-500' },
-        { name: 'Bank', balance: 500, icon: '🏛️', color: 'bg-blue-500' }
+        { name: 'Credit', balance: 800, icon: '💳', color: 'bg-indigo-500', isSavings: false },
+        { name: 'Cash', balance: 1500, icon: '💵', color: 'bg-emerald-500', isSavings: false },
+        { name: 'Bank', balance: 500, icon: '🏛️', color: 'bg-blue-500', isSavings: true }
     ],
     categories: {
         expense: [
@@ -29,10 +29,13 @@ const INITIAL_STATE = {
     debts: [
         { id: 1, person: 'রহিম ভাই', amount: 1200, type: 'lend', wallet: 'Cash', date: '2026-11-15', settled: false },
         { id: 2, person: 'করিম সাহেব', amount: 2000, type: 'borrow', wallet: 'Bank', date: '2026-11-10', settled: false }
-    ]
+    ],
+    savingsLogs: []
 };
 
 let state = JSON.parse(localStorage.getItem('takatrack_v5')) || INITIAL_STATE;
+if (!state.savingsLogs) state.savingsLogs = [];
+
 let currentMode = 'expense';
 let selectedWallet = 'Cash';
 let selectedCategory = state.categories.expense[0].name;
@@ -42,11 +45,19 @@ let pickerContext = 'single';
 
 function saveAndRender() {
     localStorage.setItem('takatrack_v5', JSON.stringify(state));
-    renderDashboard();
+    if (typeof renderDashboard === 'function') renderDashboard();
 }
 
 function fmt(n) { return '৳' + Number(n || 0).toLocaleString(); }
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function closeModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+}
+
+function getFirstSpendableWallet() {
+    const nonSavings = state.wallets.find(w => !w.isSavings);
+    return nonSavings ? nonSavings.name : state.wallets[0].name;
+}
 
 function openTxModal(mode = 'expense', walletName = null) {
     const now = new Date();
@@ -54,7 +65,14 @@ function openTxModal(mode = 'expense', walletName = null) {
     document.getElementById('txAmount').value = '';
     document.getElementById('txFee').value = '0';
     document.getElementById('txNote').value = '';
-    selectedWallet = walletName || state.defaultWallet;
+
+    let targetW = walletName || state.defaultWallet;
+    const wObj = state.wallets.find(w => w.name === targetW);
+    if (mode === 'expense' && wObj && wObj.isSavings) {
+        targetW = getFirstSpendableWallet();
+    }
+    selectedWallet = targetW;
+
     switchTxMode(mode);
     document.getElementById('txModal').classList.remove('hidden');
 }
@@ -63,13 +81,17 @@ function switchTxMode(mode) {
     currentMode = mode;
     ['expense', 'deposit', 'transfer'].forEach(m => {
         const btn = document.getElementById('tabMode-' + m);
-        if(btn) btn.className = "py-2 rounded-xl text-xs font-bold text-slate-400 cursor-pointer";
+        if (btn) btn.className = "py-2 rounded-xl text-xs font-bold text-slate-400 cursor-pointer";
     });
     const std = document.getElementById('standardFields');
     const trf = document.getElementById('transferFields');
     const btn = document.getElementById('txSubmitBtn');
 
-    if(mode === 'expense') {
+    if (mode === 'expense') {
+        const curW = state.wallets.find(w => w.name === selectedWallet);
+        if (curW && curW.isSavings) {
+            selectedWallet = getFirstSpendableWallet();
+        }
         document.getElementById('tabMode-expense').className = "py-2 rounded-xl text-xs font-bold bg-[#1c202d] text-rose-400 cursor-pointer";
         document.getElementById('txModalTitle').innerText = "Record Expense";
         selectedCategory = state.categories.expense[0].name;
@@ -77,7 +99,7 @@ function switchTxMode(mode) {
         trf.classList.add('hidden');
         btn.className = "bg-rose-500 text-white font-bold py-2.5 rounded-xl text-xs shadow-lg cursor-pointer";
         btn.innerText = "✓ Save Expense";
-    } else if(mode === 'deposit') {
+    } else if (mode === 'deposit') {
         document.getElementById('tabMode-deposit').className = "py-2 rounded-xl text-xs font-bold bg-[#1c202d] text-emerald-400 cursor-pointer";
         document.getElementById('txModalTitle').innerText = "Record Deposit";
         selectedCategory = state.categories.deposit[0].name;
@@ -100,55 +122,61 @@ function switchTxMode(mode) {
 function syncModalLabels() {
     const wObj = state.wallets.find(w => w.name === selectedWallet) || state.wallets[0];
     const sEl = document.getElementById('selectedWalletText');
-    if(sEl) sEl.innerText = wObj.name;
+    if (sEl) sEl.innerText = wObj.name;
     const bEl = document.getElementById('lblSingleWalletBal');
-    if(bEl) bEl.innerText = fmt(wObj.balance);
+    if (bEl) bEl.innerText = fmt(wObj.balance);
     const cEl = document.getElementById('selectedCatText');
-    if(cEl) cEl.innerText = selectedCategory;
+    if (cEl) cEl.innerText = selectedCategory;
 
     const fObj = state.wallets.find(w => w.name === transferFrom) || state.wallets[0];
     const tObj = state.wallets.find(w => w.name === transferTo) || state.wallets[1] || state.wallets[0];
     const sfEl = document.getElementById('selectedFromText');
-    if(sfEl) sfEl.innerText = fObj.name;
+    if (sfEl) sfEl.innerText = fObj.name;
     const fbEl = document.getElementById('lblFromBal');
-    if(fbEl) fbEl.innerText = fmt(fObj.balance);
+    if (fbEl) fbEl.innerText = fmt(fObj.balance);
     const stEl = document.getElementById('selectedToText');
-    if(stEl) stEl.innerText = tObj.name;
+    if (stEl) stEl.innerText = tObj.name;
     const tbEl = document.getElementById('lblToBal');
-    if(tbEl) tbEl.innerText = fmt(tObj.balance);
+    if (tbEl) tbEl.innerText = fmt(tObj.balance);
 }
 
 function updateTransferPreview() {
     const amtField = document.getElementById('txAmount');
-    if(!amtField) return;
+    if (!amtField) return;
     const amt = parseFloat(amtField.value) || 0;
     const tObj = state.wallets.find(w => w.name === transferTo) || state.wallets[0];
     const targetBox = document.getElementById('targetGetsBox');
-    if(targetBox) targetBox.innerText = `${fmt(tObj.balance)} → ${fmt(tObj.balance + amt)}`;
+    if (targetBox) targetBox.innerText = `${fmt(tObj.balance)} → ${fmt(tObj.balance + amt)}`;
 }
 
 function openDefaultWalletPicker() { openWalletPicker('default'); }
 function openWalletPicker(ctx) {
     pickerContext = ctx;
+    // Expense মোডে থাকলে সঞ্চয় ওয়ালেট লক/ফিল্টার দেখাবে
     const list = state.wallets;
     const listEl = document.getElementById('walletPickerList');
-    if(!listEl) return;
-    listEl.innerHTML = list.map(w => `
-        <div onclick="selectWalletFromPicker('${w.name}')" class="px-5 py-4 flex justify-between items-center cursor-pointer hover:bg-slate-800/50">
+    if (!listEl) return;
+    listEl.innerHTML = list.map(w => {
+        const lockedForExpense = (ctx === 'single' && currentMode === 'expense' && w.isSavings);
+        return `
+        <div onclick="${lockedForExpense ? "alert('🔒 এটি একটি সঞ্চয় ওয়ালেট! এখান থেকে সাধারণ খরচ (Expense) করা নিষিদ্ধ। তবে ধার ও দেনা পেজ থেকে ধার দেওয়া যাবে।')" : `selectWalletFromPicker('${w.name}')`}" class="px-5 py-4 flex justify-between items-center cursor-pointer ${lockedForExpense ? 'opacity-50 bg-slate-900/60' : 'hover:bg-slate-800/50'}">
             <div class="flex items-center space-x-3.5">
                 <div class="w-10 h-10 rounded-xl ${w.color} text-white flex items-center justify-center text-base">${w.icon}</div>
-                <div><p class="font-bold text-sm text-white">${w.name}</p><p class="text-xs text-slate-400">${fmt(w.balance)}</p></div>
+                <div>
+                    <p class="font-bold text-sm text-white">${w.name} ${w.isSavings ? '<span class="text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded ml-1">🏦 সঞ্চয়</span>' : ''}</p>
+                    <p class="text-xs text-slate-400">${fmt(w.balance)} ${lockedForExpense ? '• 🔒 Expense নিষিদ্ধ' : ''}</p>
+                </div>
             </div>
         </div>
-    `).join('');
+    `}).join('');
     document.getElementById('walletPickerModal').classList.remove('hidden');
 }
 
 function selectWalletFromPicker(name) {
-    if(pickerContext === 'single') selectedWallet = name;
-    else if(pickerContext === 'default') state.defaultWallet = name;
-    else if(pickerContext === 'from') transferFrom = name;
-    else if(pickerContext === 'to') transferTo = name;
+    if (pickerContext === 'single') selectedWallet = name;
+    else if (pickerContext === 'default') state.defaultWallet = name;
+    else if (pickerContext === 'from') transferFrom = name;
+    else if (pickerContext === 'to') transferTo = name;
     closeModal('walletPickerModal');
     syncModalLabels();
     updateTransferPreview();
@@ -158,7 +186,7 @@ function selectWalletFromPicker(name) {
 function openCategoryPicker() {
     const list = currentMode === 'deposit' ? state.categories.deposit : state.categories.expense;
     const listEl = document.getElementById('categoryPickerList');
-    if(!listEl) return;
+    if (!listEl) return;
     listEl.innerHTML = list.map(c => `
         <div onclick="selectCategoryFromPicker('${c.name}')" class="px-5 py-3.5 flex justify-between items-center cursor-pointer hover:bg-slate-800/50">
             <div class="flex items-center space-x-3.5">
@@ -178,7 +206,7 @@ function selectCategoryFromPicker(cName) {
 
 function promptAddNewCategory() {
     const name = prompt("নতুন ক্যাটাগরির নাম লিখুন:");
-    if(!name || !name.trim()) return;
+    if (!name || !name.trim()) return;
     const clean = name.trim();
     const list = currentMode === 'deposit' ? state.categories.deposit : state.categories.expense;
     list.push({ name: clean, icon: '🏷️', color: 'bg-teal-500' });
@@ -193,24 +221,28 @@ function submitTransaction(e) {
     const amount = parseFloat(document.getElementById('txAmount').value);
     const date = document.getElementById('txDate').value;
     const note = document.getElementById('txNote').value;
-    if(isNaN(amount) || amount <= 0) return;
+    if (isNaN(amount) || amount <= 0) return;
 
-    if(currentMode === 'transfer') {
-        if(transferFrom === transferTo) { alert('একই ওয়ালেটে ট্রান্সফার করা যাবে না!'); return; }
+    if (currentMode === 'transfer') {
+        if (transferFrom === transferTo) { alert('একই ওয়ালেটে ট্রান্সফার করা যাবে না!'); return; }
         const fee = parseFloat(document.getElementById('txFee').value) || 0;
         const wFrom = state.wallets.find(w => w.name === transferFrom);
         const wTo = state.wallets.find(w => w.name === transferTo);
-        if(wFrom && wTo) {
+        if (wFrom && wTo) {
             wFrom.balance -= (amount + fee);
             wTo.balance += amount;
             state.transactions.unshift({ id: Date.now(), type: 'transfer', amount, wallet: `${transferFrom} → ${transferTo}`, category: note || 'Fund Transfer', date, time: '12:00 PM', icon: '⇄', color: 'bg-indigo-500' });
         }
     } else {
         const wObj = state.wallets.find(w => w.name === selectedWallet);
+        if (currentMode === 'expense' && wObj && wObj.isSavings) {
+            alert('🔒 সঞ্চয় ওয়ালেট থেকে খরচ (Expense) করা যাবে না!');
+            return;
+        }
         const catList = currentMode === 'deposit' ? state.categories.deposit : state.categories.expense;
         const catObj = catList.find(c => c.name === selectedCategory) || catList[0];
-        if(wObj) {
-            if(currentMode === 'deposit') wObj.balance += amount;
+        if (wObj) {
+            if (currentMode === 'deposit') wObj.balance += amount;
             else wObj.balance -= amount;
         }
         state.transactions.unshift({ id: Date.now(), type: currentMode, amount, wallet: selectedWallet, category: note || selectedCategory, date, time: '12:00 PM', icon: catObj.icon, color: catObj.color });
@@ -220,12 +252,12 @@ function submitTransaction(e) {
 }
 
 function deleteTx(id) {
-    if(!confirm('লেনদেনটি মুছে ফেলতে চান?')) return;
+    if (!confirm('লেনদেনটি মুছে ফেলতে চান?')) return;
     const tx = state.transactions.find(t => t.id === id);
-    if(tx && tx.type !== 'transfer') {
+    if (tx && tx.type !== 'transfer') {
         const w = state.wallets.find(x => x.name === tx.wallet);
-        if(w) {
-            if(tx.type === 'deposit') w.balance -= tx.amount;
+        if (w) {
+            if (tx.type === 'deposit') w.balance -= tx.amount;
             else w.balance += tx.amount;
         }
     }
@@ -233,45 +265,13 @@ function deleteTx(id) {
     saveAndRender();
 }
 
-function toggleSettingsModal() {
-    const m = document.getElementById('settingsModal');
-    if(m) m.classList.toggle('hidden');
-    const cfToggle = document.getElementById('carryForwardToggle');
-    if(cfToggle) cfToggle.checked = state.carryForwardEnabled;
-    const cfAmt = document.getElementById('carryForwardAmountInput');
-    if(cfAmt) cfAmt.value = state.carryForwardAmount;
-}
-
-function toggleCarryForwardSetting(el) {
-    state.carryForwardEnabled = el.checked;
-    saveAndRender();
-}
-
-function updateCarryForwardAmount(el) {
-    state.carryForwardAmount = parseFloat(el.value) || 0;
-    saveAndRender();
-}
-
-function exportJSONBackup() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
-    const a = document.createElement('a');
-    a.setAttribute("href", dataStr);
-    a.setAttribute("download", "TakaTrack_Backup.json");
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-}
-
 function renderDashboard() {
+    if (!document.getElementById('dashDefBalance')) return;
     const defW = state.wallets.find(w => w.name === state.defaultWallet) || state.wallets[0];
-    const defIcon = document.getElementById('dashDefIcon');
-    if(defIcon) defIcon.innerText = defW.icon;
-    const defNameUp = document.getElementById('dashDefNameUpper');
-    if(defNameUp) defNameUp.innerText = defW.name.toUpperCase();
-    const defSub = document.getElementById('dashDefNameSub');
-    if(defSub) defSub.innerText = defW.name;
-    const defBal = document.getElementById('dashDefBalance');
-    if(defBal) defBal.innerText = fmt(defW.balance);
+    document.getElementById('dashDefIcon').innerText = defW.icon;
+    document.getElementById('dashDefNameUpper').innerText = defW.name.toUpperCase();
+    document.getElementById('dashDefNameSub').innerText = defW.name;
+    document.getElementById('dashDefBalance').innerText = fmt(defW.balance);
 
     const walletsSum = state.wallets.reduce((s, w) => s + w.balance, 0);
     const carryExtra = state.carryForwardEnabled ? state.carryForwardAmount : 0;
@@ -281,34 +281,28 @@ function renderDashboard() {
     const totalOut = state.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
 
     const banner = document.getElementById('dashCarryForwardBanner');
-    if(banner) {
-        if(state.carryForwardEnabled) {
+    if (banner) {
+        if (state.carryForwardEnabled) {
             banner.classList.remove('hidden');
-            const cfAmt = document.getElementById('dashCarryForwardAmount');
-            if(cfAmt) cfAmt.innerText = `+${fmt(state.carryForwardAmount)}`;
+            document.getElementById('dashCarryForwardAmount').innerText = `+${fmt(state.carryForwardAmount)}`;
         } else {
             banner.classList.add('hidden');
         }
     }
 
-    const tBal = document.getElementById('dashTotalBalance');
-    if(tBal) tBal.innerText = fmt(totalBal);
-    const accBadge = document.getElementById('dashAccBadge');
-    if(accBadge) accBadge.innerText = `${state.wallets.length} accounts`;
-    const wList = document.getElementById('dashWalletNamesList');
-    if(wList) wList.innerText = `Sum of ${state.wallets.map(w => w.name).join(', ')}`;
-    const tIn = document.getElementById('dashTotalIn');
-    if(tIn) tIn.innerText = `+${fmt(totalIn)}`;
-    const tOut = document.getElementById('dashTotalOut');
-    if(tOut) tOut.innerText = `-${fmt(totalOut)}`;
+    document.getElementById('dashTotalBalance').innerText = fmt(totalBal);
+    document.getElementById('dashAccBadge').innerText = `${state.wallets.length} accounts`;
+    document.getElementById('dashWalletNamesList').innerText = `Sum of ${state.wallets.map(w => w.name).join(', ')}`;
+    document.getElementById('dashTotalIn').innerText = `+${fmt(totalIn)}`;
+    document.getElementById('dashTotalOut').innerText = `-${fmt(totalOut)}`;
 
     const wGrid = document.getElementById('dashWalletsGrid');
-    if(wGrid) {
+    if (wGrid) {
         wGrid.innerHTML = state.wallets.map(w => `
-            <div class="bg-[#242938] border ${w.name === defW.name ? 'border-amber-500/60' : 'border-slate-700/60'} p-3.5 rounded-2xl space-y-2">
+            <div class="bg-[#242938] border ${w.name === defW.name ? 'border-amber-500/60' : w.isSavings ? 'border-blue-500/50' : 'border-slate-700/60'} p-3.5 rounded-2xl space-y-2">
                 <div class="flex justify-between items-center">
                     <span class="w-8 h-8 rounded-xl ${w.color} flex items-center justify-center text-sm text-white">${w.icon}</span>
-                    ${w.name === defW.name ? '<span class="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-bold">★ Default</span>' : ''}
+                    ${w.isSavings ? '<span class="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded font-bold">🏦 সঞ্চয়</span>' : (w.name === defW.name ? '<span class="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-bold">★ Default</span>' : '')}
                 </div>
                 <div><p class="text-xs font-bold text-slate-200">${w.name}</p><p class="text-base font-extrabold text-white mt-0.5">${fmt(w.balance)}</p></div>
             </div>
@@ -316,9 +310,9 @@ function renderDashboard() {
     }
 
     const recBadge = document.getElementById('dashRecentBadge');
-    if(recBadge) recBadge.innerText = `${state.transactions.length} total`;
+    if (recBadge) recBadge.innerText = `${state.transactions.length} total`;
     const recCont = document.getElementById('dashRecentContainer');
-    if(recCont) {
+    if (recCont) {
         recCont.innerHTML = `
             <div class="bg-[#242938]/70 border border-slate-700/50 rounded-2xl divide-y divide-slate-700/50">
                 ${state.transactions.slice(0, 5).map(t => `
