@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TakaTrack - Savings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { background-color: #13161f; color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.8); }
+    </style>
+</head>
+<body class="bg-[#13161f] text-slate-100 min-h-screen pb-28 select-none">
+
+    <!-- Top Header -->
+    <header class="px-4 py-3 flex justify-between items-center border-b border-slate-800/80 sticky top-0 bg-[#13161f]/95 backdrop-blur-md z-30">
+        <div class="flex items-center space-x-2.5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-emerald-500 to-teal-400 flex items-center justify-center font-bold text-white shadow-lg">৳</div>
+            <h1 class="font-bold text-lg tracking-tight text-white">Expense Tracker</h1>
+        </div>
+        <div class="flex items-center space-x-3.5 text-slate-300">
+            <a href="settings.html" class="p-1 cursor-pointer text-lg">⚙️</a>
+        </div>
+    </header>
+
+    <!-- Sub Navigation Tabs -->
+    <div class="px-4 py-2.5 flex space-x-2 overflow-x-auto no-scrollbar border-b border-slate-800/80 sticky top-[61px] bg-[#13161f]/95 z-20">
+        <a href="index.html" class="shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white flex items-center space-x-1.5"><span>⊞</span><span>Dashboard</span></a>
+        <a href="summary.html" class="shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white flex items-center space-x-1.5"><span>📅</span><span>Summary</span></a>
+        <a href="ledger.html" class="shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white flex items-center space-x-1.5"><span>🧾</span><span>Ledger</span></a>
+        <a href="wallets.html" class="shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white flex items-center space-x-1.5"><span>👛</span><span>Wallets</span></a>
+        <a href="savings.html" class="shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500 text-slate-950 flex items-center space-x-1.5"><span>🏦</span><span>সঞ্চয়</span></a>
+        <a href="debts.html" class="shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white flex items-center space-x-1.5"><span>🤝</span><span>ধার ও দেনা</span></a>
+        <a href="settings.html" class="shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white flex items-center space-x-1.5"><span>⚙️</span><span>Settings</span></a>
+    </div>
+
+    <!-- SAVINGS MAIN CONTENT -->
+    <main class="p-4 max-w-md mx-auto space-y-4">
+        
+        <!-- Total Savings Card -->
+        <div class="bg-gradient-to-br from-blue-600 to-indigo-800 p-5 rounded-3xl shadow-xl relative overflow-hidden text-white space-y-3">
+            <div class="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full pointer-events-none"></div>
+            <div class="flex justify-between items-center">
+                <span class="text-xs font-bold uppercase tracking-wider text-blue-100">🏦 মোট সঞ্চয় (Total Savings)</span>
+                <span class="bg-black/25 text-amber-300 text-[10px] font-bold px-2.5 py-1 rounded-full">🔒 Expense Locked</span>
+            </div>
+            <div>
+                <h2 id="totalSavingsBalance" class="text-3xl font-extrabold tracking-tight">৳0</h2>
+                <p class="text-[11px] text-blue-100 mt-1">এই ওয়ালেট থেকে খরচ (Expense) নিষিদ্ধ, তবে জরুরি ধার (Lend) দেওয়া যাবে।</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5 pt-2">
+                <button type="button" onclick="openMonthlySaveModal()" class="bg-white text-indigo-950 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center space-x-1 shadow-md cursor-pointer">
+                    <span>💰 মাসিক সঞ্চয় জমা</span>
+                </button>
+                <button type="button" onclick="openAddSavingsWalletModal()" class="bg-indigo-950/50 border border-white/25 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center space-x-1 cursor-pointer">
+                    <span>+ সঞ্চয় ব্যাংক/ওয়ালেট</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Savings Wallets / Banks List -->
+        <div class="bg-[#1c202d] border border-slate-800 p-5 rounded-3xl space-y-3">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-sm text-white">সঞ্চয় ব্যাংক ও ওয়ালেটসমূহ</h3>
+                    <p class="text-[11px] text-slate-400">যেসব অ্যাকাউন্টে আপনার সঞ্চয় জমা হচ্ছে</p>
+                </div>
+            </div>
+            <div id="savingsWalletsContainer" class="space-y-2.5"></div>
+        </div>
+
+        <!-- Monthly Savings History -->
+        <div class="bg-[#1c202d] border border-slate-800 p-5 rounded-3xl space-y-3">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-sm text-white">মাসিক সঞ্চয়ের ইতিহাস</h3>
+                <span id="savingsHistoryCount" class="bg-[#242938] text-slate-300 text-[10px] font-semibold px-2.5 py-0.5 rounded-full">0 টি</span>
+            </div>
+            <div id="savingsHistoryContainer" class="divide-y divide-slate-800"></div>
+        </div>
+
+    </main>
+
+    <!-- Bottom Nav Bar -->
+    <nav class="fixed bottom-0 inset-x-0 bg-[#1c202d]/95 backdrop-blur-md border-t border-slate-800 px-3 py-2 flex justify-around items-center z-40">
+        <a href="index.html" class="flex flex-col items-center text-slate-400 text-[10px] space-y-1"><span>⊞</span><span>Home</span></a>
+        <a href="ledger.html" class="flex flex-col items-center text-slate-400 text-[10px] space-y-1"><span>🧾</span><span>Ledger</span></a>
+        <a href="savings.html" class="flex flex-col items-center text-emerald-400 text-[10px] font-bold space-y-1"><span>🏦</span><span>Savings</span></a>
+        <a href="debts.html" class="flex flex-col items-center text-slate-400 text-[10px] space-y-1"><span>🤝</span><span>Debts</span></a>
+        <a href="settings.html" class="flex flex-col items-center text-slate-400 text-[10px] space-y-1"><span>⚙️</span><span>Settings</span></a>
+    </nav>
+
+    <!-- MODAL 1: MONTHLY SAVINGS TRANSFER -->
+    <div id="monthlySaveModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#1c202d] border border-slate-700/80 w-full max-w-sm rounded-3xl p-5 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 class="font-bold text-base text-white">💰 মাসিক সঞ্চয় জমা দিন</h3>
+                    <p class="text-[10px] text-slate-400">মেইন ওয়ালেট থেকে কেটে সঞ্চয় অ্যাকাউন্টে ঢুকবে</p>
+                </div>
+                <button type="button" onclick="closeModal('monthlySaveModal')" class="text-slate-400 text-sm cursor-pointer">✕</button>
+            </div>
+            <form onsubmit="submitMonthlySaving(event)" class="space-y-3.5">
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold block mb-1">কোন ওয়ালেট থেকে কাটবে? (Source) *</label>
+                    <select id="saveFromWallet" required class="w-full bg-[#242938] border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none"></select>
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold block mb-1">কোন সঞ্চয় ব্যাংক/ওয়ালেটে ঢুকবে? (Target) *</label>
+                    <select id="saveToWallet" required class="w-full bg-[#242938] border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none"></select>
+                </div>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-bold block mb-1">পরিমাণ (৳) *</label>
+                        <input type="number" id="saveAmount" step="any" placeholder="0.00" required class="w-full bg-[#242938] border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-bold block mb-1">মাস / তারিখ:</label>
+                        <input type="date" id="saveDate" required class="w-full bg-[#242938] border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold block mb-1">নোট (যেমন: নভেম্বর মাসের সঞ্চয়):</label>
+                    <input type="text" id="saveNote" placeholder="মাসিক সঞ্চয়" class="w-full bg-[#242938] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+                </div>
+                <button type="submit" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs shadow-lg cursor-pointer">✓ সঞ্চয় নিশ্চিত করুন</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: ADD / MARK SAVINGS BANK/WALLET -->
+    <div id="addSavingsWalletModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#1c202d] border border-slate-700/80 w-full max-w-sm rounded-3xl p-5 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 class="font-bold text-base text-white">🏦 নতুন সঞ্চয় ব্যাংক / ওয়ালেট</h3>
+                    <p class="text-[10px] text-slate-400">এটি সঞ্চয় অ্যাকাউন্ট হিসেবে সেট হবে (Expense লক থাকবে)</p>
+                </div>
+                <button type="button" onclick="closeModal('addSavingsWalletModal')" class="text-slate-400 text-sm cursor-pointer">✕</button>
+            </div>
+            <form onsubmit="createSavingsWallet(event)" class="space-y-3.5">
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold block mb-1">ব্যাংক বা ওয়ালেটের নাম *</label>
+                    <input type="text" id="newSavWalletName" placeholder="যেমন: NRBC DPS / City Savings" required class="w-full bg-[#242938] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold block mb-1">প্রাথমিক ব্যালেন্স (৳):</label>
+                    <input type="number" id="newSavWalletBal" value="0" step="any" class="w-full bg-[#242938] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2.5 rounded-xl text-xs shadow-lg cursor-pointer">+ সঞ্চয় অ্যাকাউন্ট যোগ করুন</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- LINK COMMON JS ENGINE -->
+    <script src="js/app.js"></script>
+    <script>
+        function openMonthlySaveModal() {
+            const normalWallets = state.wallets.filter(w => !w.isSavings);
+            const savingsWallets = state.wallets.filter(w => w.isSavings);
+
+            if (savingsWallets.length === 0) {
+                alert('আগে "+ সঞ্চয় ব্যাংক/ওয়ালেট" বাটন থেকে অন্তত একটি সঞ্চয় অ্যাকাউন্ট তৈরি করুন!');
+                return;
+            }
+            if (normalWallets.length === 0) {
+                alert('টাকা কাটার জন্য অন্তত একটি সাধারণ ওয়ালেট থাকতে হবে!');
+                return;
+            }
+
+            document.getElementById('saveFromWallet').innerHTML = normalWallets.map(w => `<option value="${w.name}">${w.name} (${fmt(w.balance)})</option>`).join('');
+            document.getElementById('saveToWallet').innerHTML = savingsWallets.map(w => `<option value="${w.name}">${w.name} (${fmt(w.balance)})</option>`).join('');
+            document.getElementById('saveAmount').value = '';
+            document.getElementById('saveNote').value = '';
+            document.getElementById('saveDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('monthlySaveModal').classList.remove('hidden');
+        }
+
+        function openAddSavingsWalletModal() {
+            document.getElementById('newSavWalletName').value = '';
+            document.getElementById('newSavWalletBal').value = '0';
+            document.getElementById('addSavingsWalletModal').classList.remove('hidden');
+        }
+
+        function createSavingsWallet(e) {
+            e.preventDefault();
+            const name = document.getElementById('newSavWalletName').value.trim();
+            const bal = parseFloat(document.getElementById('newSavWalletBal').value) || 0;
+            if (!name) return;
+
+            if (state.wallets.some(w => w.name.toLowerCase() === name.toLowerCase())) {
+                alert('এই নামে ইতিমধ্যে একটি ওয়ালেট আছে!');
+                return;
+            }
+
+            state.wallets.push({
+                name: name,
+                balance: bal,
+                icon: '🏦',
+                color: 'bg-blue-600',
+                isSavings: true
+            });
+
+            closeModal('addSavingsWalletModal');
+            saveAndRenderSavings();
+        }
+
+        function submitMonthlySaving(e) {
+            e.preventDefault();
+            const fromName = document.getElementById('saveFromWallet').value;
+            const toName = document.getElementById('saveToWallet').value;
+            const amount = parseFloat(document.getElementById('saveAmount').value);
+            const date = document.getElementById('saveDate').value;
+            const note = document.getElementById('saveNote').value.trim() || 'মাসিক সঞ্চয় জমা';
+
+            if (isNaN(amount) || amount <= 0) return;
+
+            const wFrom = state.wallets.find(w => w.name === fromName);
+            const wTo = state.wallets.find(w => w.name === toName);
+
+            if (!wFrom || !wTo) return;
+            if (wFrom.balance < amount) {
+                if (!confirm(`${fromName} ওয়ালেটে পর্যাপ্ত ব্যালেন্স নেই (${fmt(wFrom.balance)})। তবুও মাইনাস ব্যালেন্স করে সঞ্চয়ে জমা করবেন?`)) return;
+            }
+
+            wFrom.balance -= amount;
+            wTo.balance += amount;
+
+            if (!state.savingsLogs) state.savingsLogs = [];
+            state.savingsLogs.unshift({
+                id: Date.now(),
+                from: fromName,
+                to: toName,
+                amount: amount,
+                date: date,
+                note: note
+            });
+
+            // Ledger-এ ট্রান্সফার হিসেবে রেকর্ড রাখা (আয়-ব্যয় হিসেবে নয়)
+            state.transactions.unshift({
+                id: Date.now() + 1,
+                type: 'transfer',
+                amount: amount,
+                wallet: `${fromName} → ${toName}`,
+                category: `🏦 ${note}`,
+                date: date,
+                time: '12:00 PM',
+                icon: '🏦',
+                color: 'bg-blue-600'
+            });
+
+            closeModal('monthlySaveModal');
+            saveAndRenderSavings();
+        }
+
+        function toggleSavingsLock(walletName) {
+            const w = state.wallets.find(x => x.name === walletName);
+            if (!w) return;
+            w.isSavings = !w.isSavings;
+            saveAndRenderSavings();
+        }
+
+        function saveAndRenderSavings() {
+            localStorage.setItem('takatrack_v5', JSON.stringify(state));
+            renderSavingsPage();
+        }
+
+        function renderSavingsPage() {
+            const savingsWallets = state.wallets.filter(w => w.isSavings);
+            const totalSav = savingsWallets.reduce((s, w) => s + w.balance, 0);
+            document.getElementById('totalSavingsBalance').innerText = fmt(totalSav);
+
+            const wCont = document.getElementById('savingsWalletsContainer');
+            if (savingsWallets.length === 0) {
+                wCont.innerHTML = `<p class="text-xs text-slate-400 bg-[#242938] p-4 rounded-2xl text-center">কোনো সঞ্চয় ব্যাংক/ওয়ালেট যুক্ত করা হয়নি। উপরের <b>"+ সঞ্চয় ব্যাংক/ওয়ালেট"</b> বাটনে ক্লিক করে যুক্ত করুন।</p>`;
+            } else {
+                wCont.innerHTML = savingsWallets.map(w => `
+                    <div class="bg-[#242938] border border-blue-500/40 p-3.5 rounded-2xl flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-10 h-10 rounded-xl ${w.color} text-white flex items-center justify-center text-base">${w.icon}</span>
+                            <div>
+                                <p class="font-bold text-xs text-white">${w.name}</p>
+                                <span class="text-[10px] text-amber-300 font-semibold">🔒 Expense নিষিদ্ধ | 🤝 ধার দেওয়া যাবে</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-extrabold text-sm text-emerald-400">${fmt(w.balance)}</p>
+                            <button type="button" onclick="toggleSavingsLock('${w.name}')" class="text-[10px] text-slate-400 underline mt-0.5 cursor-pointer">সাধারণ করুন</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            const logs = state.savingsLogs || [];
+            document.getElementById('savingsHistoryCount').innerText = `${logs.length} টি`;
+            const hCont = document.getElementById('savingsHistoryContainer');
+            if (logs.length === 0) {
+                hCont.innerHTML = `<p class="text-xs text-slate-500 py-4 text-center">এখনো কোনো মাসিক সঞ্চয় জমা দেওয়া হয়নি।</p>`;
+            } else {
+                hCont.innerHTML = logs.map(l => `
+                    <div class="py-3 flex justify-between items-center text-xs">
+                        <div>
+                            <p class="font-bold text-white">${l.note}</p>
+                            <p class="text-[10px] text-slate-400">${l.from} → ${l.to} • ${l.date}</p>
+                        </div>
+                        <span class="font-extrabold text-blue-400">+${fmt(l.amount)}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        renderSavingsPage();
+    </script>
+</body>
+</html>
